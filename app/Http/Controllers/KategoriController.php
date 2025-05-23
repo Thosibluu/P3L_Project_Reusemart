@@ -6,59 +6,16 @@ use Illuminate\Http\Request;
 
 class KategoriController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $kategoris = Kategori::all();
+        $barangs = []; // Fetch barangs if needed, e.g., Barang::all();
+        return view('index', compact('kategoris', 'barangs'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    // Optional: Add a method to check image existence if needed
+    private function imageExists($id)
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return file_exists(public_path('img/' . $id . '.jpg'));
     }
 }

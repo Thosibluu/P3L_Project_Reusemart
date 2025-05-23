@@ -32,14 +32,14 @@
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="/home">Reusemart</a>
+            <a class="navbar-brand" href="/home"><i class="bi bi-cart-check"></i>Reusemart</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <img src="{{ asset('img/img1.jpg') }}" alt="Profil" width="40" height="40" class="rounded-circle me-2">
+                        <img src="{{ asset('img/img1.jpg') }}" alt="Profil" width="40" height="40" class="rounded-circle me-2" >
                         <span id="user-name" class="me-3">Pengguna</span>
                     </li>
                     <li class="nav-item">
@@ -104,7 +104,7 @@
                             @endforeach
                         @endif
                     </div>
-                    <p class="penitip-message">Hanya pembeli yang dapat mengomentari produk.</p>
+                    <p class="penitip-message">Tidak dapat melakukan komentar.</p>
                     <form id="commentForm" method="POST" action="/api/komentar/{{ $barang->kode_produk }}">
                         @csrf
                         <div class="mb-3">
@@ -216,8 +216,8 @@
                     // Set the hidden email field
                     $('#alamat_email').val(alamat_email || '');
 
-                    // Handle role: hide form and show message for non-pembeli
-                    if (role !== 'pembeli') {
+                    // Handle role: hide form and show message for penitip
+                    if (role === 'penitip') {
                         $('#commentForm').hide();
                         $('.penitip-message').show();
                     } else {
@@ -259,7 +259,7 @@
                 }
 
                 if (!alamat_email) {
-                    showToast('Alamat Email tidak ditemukan.', 'error');
+                    showToast('Penitip Tidak Dapat Komentar!.', 'error');
                     return;
                 }
 

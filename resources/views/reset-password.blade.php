@@ -28,18 +28,34 @@
             border-radius: 0.5rem;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+        .alert {
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
-
-<div class="container py-5">
-
-    <div class="form-container mx-auto">
+    <div class="container py-5">
+        <div class="form-container mx-auto">
             <h3 class="text-center mb-4">Reset Password</h3>
-            <form onsubmit="event.preventDefault(); window.location.href='{{ route('home') }}'">       
+            @if (session('status'))
+                <div class="alert alert-success">
+                    {{ session('status') }}
+                </div>
+            @endif
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    {{ $errors->first() }}
+                </div>
+            @endif
+            <form id="resetForm" method="POST" action="{{ route('password.email') }}">
+                @csrf
                 <div class="mb-3">
-                    <label for="email" class="form-label">Masukkan Email Anda</label>
-                    <input type="email" class="form-control" name="email" required>
+                    <label for="registered_email_or_id" class="form-label">Email Terdaftar atau ID Penitip</label>
+                    <input type="text" class="form-control" name="registered_email_or_id" id="registered_email_or_id" required>
+                </div>
+                <div class="mb-3">
+                    <label for="send_to_email" class="form-label">Kirim Link ke Email Ini</label>
+                    <input type="email" class="form-control" name="send_to_email" id="send_to_email" required>
                 </div>
                 <button type="submit" class="btn btn-success w-100">Kirim Link Reset</button>
             </form>

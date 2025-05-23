@@ -7,10 +7,13 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
 
 class Pegawai extends Model
 {
+	use HasApiTokens;
 	protected $table = 'pegawai';
 	protected $primaryKey = 'id_pegawai';
 	public $incrementing = false;
@@ -30,11 +33,14 @@ class Pegawai extends Model
 		'alamat_pegawai',
 		'no_telpon_pegawai',
 		'tanggal_lahir',
+		'password',
 		'tanggal_tambah_pegawai_log',
 		'tanggal_ubah_pegawai_log',
 		'tanggal_hapus_pegawai_log',
 		'user_pegawai_log'
 	];
+
+	protected $hidden = ['password', 'remember_token'];
 
 	public function role()
 	{

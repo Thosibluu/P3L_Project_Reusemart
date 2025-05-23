@@ -52,6 +52,10 @@ return [
             'driver' => 'session',
             'provider' => 'penitips',
         ],
+        'pegawai' => [
+            'driver' => 'session',
+            'provider' => 'pegawais', // Use the pegawais provider
+        ],
         ],
 
     /*
@@ -84,6 +88,10 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\Penitip::class,
         ],
+        'pegawais' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Pegawai::class,
+        ],
     ],
 
     /*
@@ -109,6 +117,18 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'penitip' => [
+            'provider' => 'penitip',
+            'table' => 'password_resets',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'pembeli' => [
+            'provider' => 'pembeli',
+            'table' => 'password_resets',
             'expire' => 60,
             'throttle' => 60,
         ],

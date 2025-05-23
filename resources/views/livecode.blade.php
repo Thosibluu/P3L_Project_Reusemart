@@ -102,6 +102,8 @@
         </div>
     </div>
 
+    
+
     <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -354,8 +356,8 @@
                             <div class="col-md-5">
                                 <div class="card shadow-lg p-4 rounded-4">
                                     <div class="text-center">
-                                        <img src="${response.foto || '{{ asset('img/img1.jpg') }}'}" class="rounded-circle mb-3" width="120" height="120" alt="Foto Profil" style="object-fit: cover;">
-                                        <h4 class="fw-bold">${response.nama}</h4>
+                                        
+                                        <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#showModal">${response.nama}</a></li>
                                         <p class="text-muted">${response.email}</p>
                                     </div>
                                     <hr>
@@ -363,9 +365,22 @@
                                         <strong>Nomor Telepon:</strong>
                                         <p>${response.no_hp}</p>
                                     </div>
-                                    <div class="mb-3">
-                                        <strong>Total Poin:</strong>
-                                        <p>${response.total_poin}</p>
+                                    
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="showModal" tabindex="-1" aria-labelledby="showModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <img src="${response.foto || '{{ asset('img/img1.jpg') }}'}" class="rounded-circle mb-3" width="120" height="120" alt="Foto Profil" style="object-fit: cover;">
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                    <strong>Total Poin:</strong>
+                                                    <p>${response.total_poin}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

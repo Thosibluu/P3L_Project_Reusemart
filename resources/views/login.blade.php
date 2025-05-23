@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}"> <!-- Add CSRF token meta tag -->
     <title>Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
@@ -36,7 +37,7 @@
     </style>
 </head>
 <body style="height: 70vh;">
-    <div class="text-center fw-bold fs-3" style="color: #00aa5b;">Reusemart</div>
+    <a href="/" class="d-flex justify-content-center align-items-center fw-bold fs-3" style="color: #00aa5b; height: 10vh; text-decoration: none;"><i class="bi bi-cart-check"></i>Reusemart</a>
     <div class="d-flex align-items-center justify-content-center h-100">
         <div class="form-container">
             <h2 class="mb-4 text-center">Login</h2>
@@ -59,7 +60,7 @@
                     <input type="password" class="form-control" id="password" name="password" required>
                 </div>
                 <div class="mb-3 text-end">
-                    <a href="{{ route('password') }}" class="text-decoration-none text-success">Lupa password?</a>
+                    <a href="{{ route('reset-password') }}" class="text-decoration-none text-success">Lupa password?</a>
                 </div>
                 <button type="submit" class="btn btn-success w-100">Login</button>
             </form>
@@ -98,10 +99,7 @@
                 }
             });
 
-            $('#loginForm').on('submit', function(e) {
-                e.preventDefault();
-                // ... rest of the code
-            });
+            
         });
 
         $('#loginForm').on('submit', function(e) {

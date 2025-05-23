@@ -92,19 +92,22 @@ class PenitipController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $transaksi = TransaksiPenitipan::with(['detailPenitipan.barang'])
+        // Fetch penitipan history with details
+        $penitipanHistory = TransaksiPenitipan::with(['detailPenitipan.barang'])
             ->where('id_penitip', $user->id_penitip)
             ->get()
-            ->map(function ($transaksi) {
-                return [
-                    'nama_barang' => $transaksi->detailPenitipan->first()->barang->nama_produk ?? 'N/A',
-                    'tanggal' => $transaksi->tanggal_penitipan,
-                    'jumlah' => $transaksi->detailPenitipan->count(),
-                    'total_harga' => $transaksi->detailPenitipan->sum(function ($detail) {
-                        return $detail->barang->harga ?? 0;
-                    }),
-                ];
-            });
+            ->flatMap(function ($transaksi) {
+                return $transaksi->detailPenitipan->map(function ($detail) use ($transaksi) {
+                    return [
+                        'id_transaksi' => $transaksi->id_transaksi_titip, // Updated to match primary key
+                        'tanggal_penitipan' => $transaksi->tanggal_penitipan,
+                        'nama_barang' => $detail->barang->nama_produk ?? 'N/A',
+                        'harga' => $detail->barang->harga ?? 0,
+                        'status_perpanjang' => $detail->barang->status_perpanjang, // Added fallback
+                        'batas_penitipan' => $transaksi->batas_penitipan, // Added fallback
+                    ];
+                })->all(); // Ensure flatMap returns an array
+            })->values();
 
         return response()->json([
             'nama' => $user->nama_penitip,
@@ -114,7 +117,8 @@ class PenitipController extends Controller
             'saldo' => $user->saldo,
             'total_poin' => $user->total_poin,
             'foto' => $user->gambar,
-            'transaksi' => $transaksi,
+            'role' => 'penitip',
+            'penitipan_history' => $penitipanHistory,
         ]);
     }
 

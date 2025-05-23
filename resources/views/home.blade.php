@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reusemart</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f5f5f5; }
         .navbar-brand { color: #00aa5b !important; font-weight: bold; }
@@ -27,7 +28,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="/">Reusemart</a>
+            <a class="navbar-brand" href="/"><i class="bi bi-cart-check"></i>Reusemart</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -53,12 +54,12 @@
         <div class="kategori-scroll mb-4 px-3">
             <div class="d-flex flex-nowrap gap-3" id="kategori-filter">
                 <div class="kategori-item text-center" data-id="">
-                    <img src="{{ asset('img/img1.jpg') }}" class="kategori-img active" alt="Semua">
+                    <img src="{{ asset('img/img1.jpg') }}" class="kategori-img active" alt="Semua" onerror="this.src='{{ asset('img/img1.jpg') }}';">
                     <div class="kategori-label">Semua</div>
                 </div>
                 @foreach ($kategoris as $kategori)
-                    <div class="kategori-item text-center" data-id="{{ $kategori->id }}">
-                        <img src="{{ $kategori->gambar ? asset('storage/kategori/' . $kategori->gambar) : asset('img/img1.jpg') }}" class="kategori-img" alt="{{ $kategori->nama_kategori }}">
+                    <div class="kategori-item text-center" data-id="{{ $kategori->id_kategori }}">
+                        <img src="{{ asset('img/' . $kategori->id_kategori . '.jpg') }}" class="kategori-img" alt="{{ $kategori->nama_kategori }}" onerror="this.src='{{ asset('img/img1.jpg') }}';">
                         <div class="kategori-label">{{ $kategori->nama_kategori }}</div>
                     </div>
                 @endforeach
@@ -180,7 +181,7 @@
                 return;
             }
 
-            const route = role === 'pembeli' ? '/profil' : '/profil-penitip';
+            const route = role === 'pembeli' ? '/livecode' : '/profil-penitip'; //livecode only!
 
             // Use fetch to send the token and check authentication
             fetch(route, {

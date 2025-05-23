@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
@@ -32,7 +33,7 @@
     </style>
 </head>
 <body style="height: 90vh;">
-<a href="/" class="d-flex justify-content-center align-items-center fw-bold fs-3" style="color: #00aa5b; height: 10vh; text-decoration: none;">Reusemart</a>
+<a href="/" class="d-flex justify-content-center align-items-center fw-bold fs-3" style="color: #00aa5b; height: 10vh; text-decoration: none;"><i class="bi bi-cart-check"></i>Reusemart</a>
     <div class="d-flex align-items-center justify-content-center h-100">
         <div class="form-container">
             <h2 class="mb-4 text-center">Register Reusemart</h2>
@@ -88,22 +89,22 @@
                 @elseif (request()->is('register/organisasi'))
                     <input type="hidden" id="role" value="organisasi">
                         <div class="mb-3">
-                            <label class="form-label">Nama Organisasi</label>
+                            <label for="name" class="form-label">Nama Organisasi</label>
                             <input type="text" class="form-control" id="nama_organisasi" name="nama_organisasi" required>
                             <div class="invalid-feedback" id="error-nama_organisasi"></div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Alamat Organisasi</label>
+                            <label for="alamat_organisasi" class="form-label">Alamat Organisasi</label>
                             <input type="text" class="form-control" id="alamat_organisasi" name="alamat_organisasi" required>
                             <div class="invalid-feedback" id="error-alamat_organisasi"></div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Nomor Telepon</label>
+                            <label for="notelpReg" class="form-label">Nomor Telepon</label>
                             <input type="text" class="form-control" id="nomor_telpon_organisasi" name="nomor_telpon_organisasi" required>
                             <div class="invalid-feedback" id="error-nomor_telpon_organisasi"></div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Password</label>
+                            <label for="passwordReg" class="form-label">Password</label>
                             <input type="password" class="form-control" id="password" name="password" required>
                             <div class="invalid-feedback" id="error-password"></div>
                         </div>

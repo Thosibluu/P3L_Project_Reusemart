@@ -9,15 +9,18 @@ use App\Http\Controllers\OrganisasiController;
 use App\Http\Controllers\AlamatController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\KomentarController;
+use App\Http\Controllers\PegawaiController;
 
 Route::post('/pembeli-register', [PembeliController::class, 'register']);
 Route::post('/penitip-register', [PenitipController::class, 'register']);
 Route::post('/organisasi-register', [OrganisasiController::class, 'register']);
 
 
-    Route::post('/pembeli-login', [PembeliController::class, 'login']);
-    Route::post('/penitip-login', [PenitipController::class, 'login']);
+Route::post('/pembeli-login', [PembeliController::class, 'login']);
+Route::post('/penitip-login', [PenitipController::class, 'login']);
 
+Route::post('/pegawai-login', [PegawaiController::class, 'pegawaiLogin']);
+Route::post('/reset-pegawai-password', [PegawaiController::class, 'resetPegawaiPassword']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
@@ -26,8 +29,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/profile', [PembeliController::class, 'getProfile'])->name('api.profile.pembeli');
     Route::get('/profile-penitip', [PenitipController::class, 'getProfile'])->name('api.profile.penitip');
-
-    
 
     Route::post('/pembeli-logout', [PembeliController::class, 'logout']);
     Route::post('/penitip-logout', [PenitipController::class, 'logout']);
@@ -39,10 +40,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/alamats/{id}/set-utama', [AlamatController::class, 'setUtama']);
     Route::post('/komentar/{kode_produk}', [KomentarController::class, 'store']);
     Route::get('/komentar/{kode_produk}', [KomentarController::class, 'index']);
+
+    
 });
 
 Route::get('/barang/kategori/{id?}', [BarangController::class, 'byKategori']);
 
 Route::get('/barang/{kode_produk}', [BarangController::class, 'apiShow']);
 
-
+Route::prefix('organisasi')->group(function () {
+    //Route::post('register', [OrganisasiController::class, 'register']);
+    Route::get('/', [OrganisasiController::class, 'index']); // Read
+    Route::put('{id}', [OrganisasiController::class, 'update']); // Update
+    Route::delete('{id}', [OrganisasiController::class, 'destroy']); // Delete
+});

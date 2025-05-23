@@ -35,7 +35,7 @@ class DetailPenitipan extends Model
 		return $this->belongsTo(Barang::class, 'kode_produk');
 	}
 
-	public function transaksi_penitipan()
+	public function transaksiPenitipan()
 	{
 		return $this->belongsTo(TransaksiPenitipan::class, 'id_transaksi_titip');
 	}

@@ -20,9 +20,16 @@ class BarangController extends Controller
         return view('home', compact('barangs', 'kategoris'));
     }
 
+    public function index2()
+    {
+        $barangs = Barang::all();
+        $kategoris = Kategori::all();
+        return view('app', compact('barangs', 'kategoris'));
+    }
+
     public function byKategori(Request $request, $id = null)
     {
-        $barangs = $id ? Barang::where('kategori_id', $id)->get() : Barang::all();
+        $barangs = $id ? Barang::where('id_kategori', $id)->get() : Barang::all();
         return response()->json($barangs);
     }
 

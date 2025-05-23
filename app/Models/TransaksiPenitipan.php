@@ -9,20 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * Class TransaksiPenitipan
- * 
- * @property string $id_transaksi_titip
- * @property string $id_penitip
- * @property Carbon $tanggal_penitipan
- * @property Carbon $batas_penitipan
- * @property Carbon $batas_pengembalian
- * 
- * @property Penitip $penitip
- * @property DetailPenitipan|null $detail_penitipan
- *
- * @package App\Models
- */
+
 class TransaksiPenitipan extends Model
 {
 	protected $table = 'transaksi_penitipan';
@@ -48,8 +35,8 @@ class TransaksiPenitipan extends Model
 		return $this->belongsTo(Penitip::class, 'id_penitip');
 	}
 
-	public function detail_penitipan()
+	public function detailPenitipan()
 	{
-		return $this->hasOne(DetailPenitipan::class, 'id_transaksi_titip');
+		return $this->hasMany(DetailPenitipan::class, 'id_transaksi_titip');
 	}
 }
