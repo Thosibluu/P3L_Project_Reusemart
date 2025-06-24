@@ -39,7 +39,8 @@ class TransaksiDonasi extends Model
 		'id_organisasi',
 		'tanggal_donasi',
 		'nama_penerima',
-		'tanggal_cetak'
+		'tanggal_cetak',
+		'hunter_related'
 	];
 
 	public function barang()

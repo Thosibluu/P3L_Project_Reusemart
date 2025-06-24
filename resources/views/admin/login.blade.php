@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: #ccf5d3;
         }
         .form-container {
@@ -116,23 +116,8 @@
                                 localStorage.setItem('access_token', data.token);
                                 console.log('Token saved:', data.token);
                             }
-                            // Use AJAX to load the admin page with the token
-                            $.ajax({
-                                url: data.redirect,
-                                method: 'GET',
-                                headers: {
-                                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-                                },
-                                success: function(response) {
-                                    $('body').html(response); // Replace the current page with the admin content
-                                },
-                                error: function(xhr) {
-                                    console.error('Failed to load admin page:', xhr.responseText);
-                                    window.location.href = data.redirect; // Fallback to direct redirect
-                                }
-                            });
                             setTimeout(() => {
-                                window.location.href = data.redirect; // Fallback redirect after 1.5s
+                                window.location.href = data.redirect;
                             }, 1500);
                         }
                     },
@@ -166,13 +151,6 @@
                     }
                 });
             });
-        });
-
-        $(document).ajaxSend(function(event, jqxhr, settings) {
-            const token = localStorage.getItem('access_token');
-            if (token && !settings.url.includes('/api/')) {
-                jqxhr.setRequestHeader('Authorization', 'Bearer ' + token);
-            }
         });
     </script>
 </body>

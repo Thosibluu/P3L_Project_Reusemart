@@ -51,4 +51,5 @@ class Kernel extends HttpKernel
         'auth:penitip' => \App\Http\Middleware\AuthenticatePenitip::class,
         'auth.token' => \App\Http\Middleware\AuthenticateWithSanctumToken::class,
     ];
+
 }

@@ -38,16 +38,21 @@ class TransaksiPembelian extends Model
 		'total_harga' => 'float',
 		'tanggal_pesan' => 'datetime',
 		'tanggal_lunas' => 'datetime',
-		'tanggal_ambil' => 'datetime'
+		'tanggal_ambil' => 'datetime',
+		'waktu_batas' => 'datetime'
 	];
 
 	protected $fillable = [
+		'id_transaksi_beli',
 		'alamat_email',
 		'total_harga',
 		'tanggal_pesan',
 		'tanggal_lunas',
 		'tanggal_ambil',
-		'status_pembelian'
+		'status_pembelian',
+		'metode_pengiriman',
+		'waktu_batas',
+		'bukti_pembayaran'
 	];
 
 	public function pembeli()
@@ -57,7 +62,7 @@ class TransaksiPembelian extends Model
 
 	public function detail_pembelian()
 	{
-		return $this->hasOne(DetailPembelian::class, 'id_transaksi_beli');
+		return $this->hasMany(DetailPembelian::class, 'id_transaksi_beli');
 	}
 
 	public function komisi()

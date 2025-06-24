@@ -34,6 +34,7 @@ class Pegawai extends Model
 		'no_telpon_pegawai',
 		'tanggal_lahir',
 		'password',
+		'device_token',
 		'tanggal_tambah_pegawai_log',
 		'tanggal_ubah_pegawai_log',
 		'tanggal_hapus_pegawai_log',

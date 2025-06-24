@@ -56,6 +56,11 @@ return [
             'driver' => 'session',
             'provider' => 'pegawais', // Use the pegawais provider
         ],
+        'api' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
+            'hash' => false,
+        ],
         ],
 
     /*

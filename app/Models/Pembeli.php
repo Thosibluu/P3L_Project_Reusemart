@@ -33,6 +33,7 @@ class Pembeli extends Authenticatable
 	protected $fillable = [
 		'alamat_email',
 		'password',
+		'device_token',
 		'nama_pembeli',
 		'nomor_telepon_pembeli',
 		'total_poin',

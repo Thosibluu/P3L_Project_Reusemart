@@ -49,11 +49,11 @@ class Barang extends Model
 		return $this->hasOne(DetailPembelian::class, 'kode_produk');
 	}
 
-	public function detail_penitipan()
+	public function detailPenitipan()
 	{
 		return $this->hasOne(DetailPenitipan::class, 'kode_produk');
 	}
-
+	
 	public function request_donasi()
 	{
 		return $this->hasOne(RequestDonasi::class, 'kode_produk');
@@ -63,4 +63,6 @@ class Barang extends Model
 	{
 		return $this->hasOne(TransaksiDonasi::class, 'kode_produk');
 	}
+
+	
 }

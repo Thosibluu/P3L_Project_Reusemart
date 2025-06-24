@@ -2,63 +2,56 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\RequestDonasi;
+use App\Models\Organisasi;
+use App\Models\Barang;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class RequestDonasiController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        //
-    }
+        try {
+            $search = $request->input('search', '');
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+            $query = RequestDonasi::with('organisasi')
+                ->where('status_request', 'menunggu')
+                ->join('organisasi', 'request_donasi.id_organisasi', '=', 'organisasi.id_organisasi')
+                ->select(
+                    'request_donasi.id_organisasi',
+                    'organisasi.nama_organisasi',
+                    'organisasi.alamat_organisasi as alamat',
+                    'request_donasi.kode_produk',
+                    'request_donasi.detail_request'
+                );
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('organisasi.nama_organisasi', 'like', "%$search%")
+                      ->orWhere('request_donasi.id_organisasi', 'like', "%$search%")
+                      ->orWhere('request_donasi.detail_request', 'like', "%$search%")
+                      ->orWhere('request_donasi.kode_produk', 'like', "%$search%");
+                });
+            }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+            $requests = $query->get();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+            $requests = $requests->map(function ($item) {
+                return [
+                    'id_organisasi' => $item->id_organisasi ?? '-',
+                    'nama_organisasi' => $item->nama_organisasi ?? '-',
+                    'alamat_organisasi' => $item->alamat ?? '-',
+                    'kode_produk' => $item->kode_produk?? '-',
+                    'detail_request' => $item->detail_request ?? '-',
+                ];
+            });
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+            Log::info('requestDonasi executed successfully, records: ' . $requests->count());
+            return response()->json($requests);
+        } catch (\Exception $e) {
+            Log::error('Error in requestDonasi: ' . $e->getMessage());
+            return response()->json(['message' => 'Terjadi kesalahan server'], 500);
+        }
     }
 }

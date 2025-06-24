@@ -14,5 +14,7 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         'api/pembeli-login',
         'api/penitip-login',
+        '/checkout', // Rute checkout
+        '/konfirmasi/*',
     ];
 }

@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; font-size: 1.1rem; }
+        body { background-color: #f8f9fa; font-family: 'Inter', sans-serif; font-size: 1.1rem; }
         .navbar-brand { font-weight: bold; color: #00aa5b !important; }
         .navbar-brand i { margin-right: 8px; }
         .card { background-color: #ffffff; border-radius: 0.8rem; transition: 0.3s ease; }

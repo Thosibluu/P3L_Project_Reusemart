@@ -20,14 +20,16 @@ class TransaksiPenitipan extends Model
 	protected $casts = [
 		'tanggal_penitipan' => 'datetime',
 		'batas_penitipan' => 'datetime',
-		'batas_pengembalian' => 'datetime'
+		'batas_pengembalian' => 'datetime',
+		'tanggal_laku' => 'datetime'
 	];
 
 	protected $fillable = [
 		'id_penitip',
 		'tanggal_penitipan',
 		'batas_penitipan',
-		'batas_pengembalian'
+		'batas_pengembalian',
+		'tanggal_laku'
 	];
 
 	public function penitip()

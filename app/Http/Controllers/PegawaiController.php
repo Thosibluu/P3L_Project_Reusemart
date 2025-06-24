@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 class PegawaiController extends Controller
 {
-   public function pegawaiLogin(Request $request)
+    public function pegawaiLogin(Request $request)
     {
         $credentials = $request->only('id_pegawai', 'password');
         $pegawai = \App\Models\Pegawai::where('id_pegawai', $credentials['id_pegawai'])->first();
@@ -28,7 +28,12 @@ class PegawaiController extends Controller
                 'success' => true,
                 'message' => 'Login berhasil!',
                 'redirect' => '/admin',
-                'token' => $token
+                'token' => $token,
+                'user' => [
+                    'id_pegawai' => $pegawai->id_pegawai,
+                    'nama_pegawai' => $pegawai->nama_pegawai,
+                    'id_role' => $pegawai->id_role,
+                ]
             ]);
         }
 
@@ -36,15 +41,29 @@ class PegawaiController extends Controller
     }
 
     public function resetPegawaiPassword(Request $request)
-{
-    $request->validate(['id_pegawai' => 'required']);
-    $pegawai = \App\Models\Pegawai::where('id_pegawai', $request->id_pegawai)->first();
+    {
+        $request->validate(['id_pegawai' => 'required']);
+        $pegawai = \App\Models\Pegawai::where('id_pegawai', $request->id_pegawai)->first();
 
-    if ($pegawai) {
-        $tanggal_lahir = Carbon::parse($pegawai->tanggal_lahir)->format('Ymd');
-        $pegawai->update(['password' => Hash::make($tanggal_lahir)]);
-        return response()->json(['message' => 'Password direset ke ' . $tanggal_lahir]);
+        if ($pegawai) {
+            $tanggal_lahir = Carbon::parse($pegawai->tanggal_lahir)->format('Ymd');
+            $pegawai->update(['password' => Hash::make($tanggal_lahir)]);
+            return response()->json(['message' => 'Password direset ke ' . $tanggal_lahir]);
+        }
+        return response()->json(['message' => 'Pegawai tidak ditemukan'], 401);
     }
-    return response()->json(['message' => 'Pegawai tidak ditemukan'], 401);
-}
+
+    public function getUser(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Tidak autentikasi'], 401);
+        }
+
+        return response()->json([
+            'id_pegawai' => $user->id_pegawai,
+            'nama_pegawai' => $user->nama_pegawai,
+            'id_role' => $user->id_role,
+        ], 200);
+    }
 }

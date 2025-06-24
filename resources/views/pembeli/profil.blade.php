@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
         .navbar-brand { font-weight: bold; color: #00aa5b !important; }
         .card { background-color: #ffffff; border-radius: 1rem; transition: 0.3s ease; margin-bottom: 15px; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 0 25px rgba(0,0,0,0.05); }
@@ -26,7 +26,7 @@
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="/home"><i class="bi bi-cart-check"></i>Reusemart</a>
+            <a class="navbar-brand" href="/home"><i class="bi bi-cart-check"></i> Reusemart</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -46,6 +46,37 @@
     <div class="container my-5">
         <div class="row g-4" id="profile-content">
             <!-- Profile Card will be loaded via AJAX -->
+        </div>
+    </div>
+
+    <div class="modal fade" id="batalModal" tabindex="-1" aria-labelledby="batalModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="batalModalLabel">Pembatalan Transaksi Valid</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="donasi-table">
+                            <thead>
+                                <tr>
+                                    <th>Nomor Transaksi</th>
+                                    <th>Tanggal Transaksi</th>
+                                    <th>Total Transaksi</th>
+                                    <th>Status Transaksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="donasi-table-body">
+                                <!-- Data will be loaded via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -130,15 +161,74 @@
             return tokenFromUrl || localStorage.getItem('access_token') || '';
         }
 
-        // Function to show toast notifications
+        function loadDonasi(search = '') {
+            const token = getToken();
+            if (!token) {
+                showToast('Sesi kadaluarsa. Silakan login ulang.', 'error');
+                window.location.href = '/login';
+                return;
+            }
+
+            const tbody = $('#donasi-table-body');
+            if (!tbody.length) {
+                console.error('Donasi table body not found in DOM');
+                showToast('Gagal memuat tabel transaksi.', 'error');
+                return;
+            }
+
+            // Show loading spinner inside the modal
+            tbody.html('<tr><td colspan="4" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat...</span></div></td></tr>');
+
+            $.ajax({
+                url: '/api/transaksi-valid' + (search ? '?search=' + encodeURIComponent(search) : ''),
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                },
+                success: function(response) {
+                    tbody.empty();
+                    if (response.length > 0) {
+                        response.forEach(donasi => {
+                            tbody.append(`
+                                <tr>
+                                    <td>${donasi.no_transaksi || '-'}</td>
+                                    <td>${donasi.tanggal_transaksi || '-'}</td>
+                                    <td>${donasi.total_transaksi || '-'}</td>
+                                    <td>${donasi.status_transaksi || '-'}</td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        tbody.append('<tr><td colspan="4" class="text-muted text-center">Tidak ada data pembelian yang ditemukan.</td></tr>');
+                    }
+                    // Show the modal after data is loaded
+                    const modalElement = document.getElementById('batalModal');
+                    if (modalElement) {
+                        const modal = new bootstrap.Modal(modalElement);
+                        modal.show();
+                    } else {
+                        console.error('batalModal not found');
+                        showToast('Gagal menampilkan modal transaksi.', 'error');
+                    }
+                },
+                error: function(xhr) {
+                    tbody.empty();
+                    tbody.append('<tr><td colspan="4" class="text-muted text-center">Gagal memuat data transaksi.</td></tr>');
+                    showToast('Gagal memuat laporan donasi: ' + (xhr.responseJSON?.message || 'Coba lagi.'), 'error');
+                    console.error('Error details:', xhr.responseText);
+                    if (xhr.status === 401 || xhr.status === 403) {
+                        window.location.href = '/login';
+                    }
+                }
+            });
+        }
+
         function showToast(message, type = 'success') {
             const toastContainer = $('.toast-container');
-            const toastId = 'toast-' + new Date().getTime(); // Unique ID for each toast
-
-            // Define toast classes based on type
+            const toastId = 'toast-' + new Date().getTime();
             const toastClass = type === 'success' ? 'bg-success text-white' : 'bg-danger text-white';
 
-            // Create toast HTML
             const toastHtml = `
                 <div id="${toastId}" class="toast ${toastClass}" role="alert" aria-live="assertive" aria-atomic="true">
                     <div class="toast-header">
@@ -151,25 +241,20 @@
                 </div>
             `;
 
-            // Append toast to container
             toastContainer.append(toastHtml);
-
-            // Initialize and show the toast
             const toastElement = $(`#${toastId}`);
-            const toast = new bootstrap.Toast(toastElement[0], { delay: 3000 }); // Auto-hide after 3 seconds
+            const toast = new bootstrap.Toast(toastElement[0], { delay: 3000 });
             toast.show();
-
-            // Remove toast from DOM after it hides
             toastElement.on('hidden.bs.toast', function () {
                 toastElement.remove();
             });
         }
 
         function bukaModalCreate() {
-            console.log('Opening create modal'); // Debugging
+            console.log('Opening create modal');
             const form = document.getElementById('alamatForm');
             if (!form) console.error('alamatForm not found');
-            form.action = '/api/alamats'; // Ensure correct API endpoint
+            form.action = '/api/alamats';
             form.querySelector('[name="_method"]')?.remove();
             document.getElementById('alamatModalLabel').innerText = 'Tambah Alamat';
             document.getElementById('id_alamat').value = '';
@@ -182,13 +267,13 @@
         }
 
         function bukaModalEdit(id, nama, jenis) {
-            console.log('Opening edit modal for ID:', id); // Debugging
+            console.log('Opening edit modal for ID:', id);
             const form = document.getElementById('alamatForm');
             if (!form) console.error('alamatForm not found');
-            form.action = '/api/alamats/' + id; // Ensure correct API endpoint
+            form.action = '/api/alamats/' + id;
             form.querySelector('[name="_method"]')?.remove();
             document.getElementById('alamatModalLabel').innerText = 'Edit Alamat';
-            document.getElementById('id_alamat').value = id;
+            documentcondition.getElementById('id_alamat').value = id;
             document.getElementById('nama_alamat').value = nama;
             document.getElementById('jenis_alamat').value = jenis;
             const modalElement = document.getElementById('alamatModal');
@@ -209,7 +294,7 @@
                     return;
                 }
 
-                console.log('Deleting ID:', id, 'Token:', token); // Debugging
+                console.log('Deleting ID:', id, 'Token:', token);
 
                 $.ajax({
                     url: '/api/alamats/' + id,
@@ -224,7 +309,7 @@
                         modal.hide();
                     },
                     error: function(xhr) {
-                        console.log('Delete Error:', xhr); // Debugging
+                        console.log('Delete Error:', xhr);
                         if (xhr.status === 401 || xhr.status === 403) {
                             showToast('Sesi kadaluarsa. Silakan login ulang.', 'error');
                             window.location.href = '/login';
@@ -244,7 +329,7 @@
                 return;
             }
 
-            console.log('Setting Utama ID:', id, 'Token:', token); // Debugging
+            console.log('Setting Utama ID:', id, 'Token:', token);
 
             $.ajax({
                 url: '/api/alamats/' + id + '/set-utama',
@@ -258,7 +343,7 @@
                     loadAddresses();
                 },
                 error: function(xhr) {
-                    console.log('Set Utama Error:', xhr); // Debugging
+                    console.log('Set Utama Error:', xhr);
                     if (xhr.status === 401 || xhr.status === 403) {
                         showToast('Sesi kadaluarsa. Silakan login ulang.', 'error');
                         window.location.href = '/login';
@@ -288,7 +373,7 @@
                     'Accept': 'application/json'
                 },
                 success: function(response) {
-                    console.log('API Response for search:', search, response); // Debugging
+                    console.log('API Response for search:', search, response);
                     const addressContainer = $('#addressContainer');
                     addressContainer.empty();
                     if (response.length > 0) {
@@ -316,7 +401,7 @@
                     }
                 },
                 error: function(xhr) {
-                    console.log('Load Addresses Error:', xhr); // Debugging
+                    console.log('Load Addresses Error:', xhr);
                     if (xhr.status === 401 || xhr.status === 403) {
                         showToast('Sesi kadaluarsa. Silakan login ulang.', 'error');
                         window.location.href = '/login';
@@ -332,11 +417,8 @@
         }
 
         $(document).ready(function () {
-            
-
             function loadProfile() {
                 const token = getToken();
-
                 if (!token) {
                     window.location.href = '/login';
                     return;
@@ -367,10 +449,14 @@
                                         <strong>Total Poin:</strong>
                                         <p>${response.total_poin}</p>
                                     </div>
+                                    <div>
+                                        <button class="btn btn-primary" onclick="loadDonasi()">Pembatalan Transaksi Valid</button>
+                                    </div>
                                 </div>
                             </div>
                         `;
 
+                       
                         let addressHtml = `
                             <div class="col-md-7">
                                 <div class="card shadow-lg p-4 rounded-4 h-100">
@@ -419,10 +505,10 @@
                         profileHtml += addressHtml;
 
                         $('#profile-content').html(profileHtml);
-                        loadAddresses(); // Load all addresses initially
+                        loadAddresses();
                     },
                     error: function(xhr) {
-                        console.log('Profile Error:', xhr); // Debugging
+                        console.log('Profile Error:', xhr);
                         if (xhr.status === 401 || xhr.status === 403) {
                             showToast('Sesi kadaluarsa. Silakan login ulang.', 'error');
                             window.location.href = '/login';
@@ -433,8 +519,8 @@
                 });
             }
 
-
             // Real-time search (default: enabled)
+            let isRealTimeSearch = true;
             $('#searchAddress').on('input', function() {
                 if (isRealTimeSearch) {
                     const searchValue = $(this).val();
@@ -444,7 +530,7 @@
 
             // Search on Enter key
             $('#searchAddress').on('keypress', function(e) {
-                if (e.which === 13) { // Enter key
+                if (e.which === 13) {
                     e.preventDefault();
                     const searchValue = $(this).val();
                     loadAddresses(searchValue);
@@ -454,15 +540,15 @@
             // Search button click with event delegation
             $(document).on('click', '#searchButton', function() {
                 const searchValue = $('#searchAddress').val();
-                console.log('Search button clicked with value:', searchValue); // Debugging
+                console.log('Search button clicked with value:', searchValue);
                 loadAddresses(searchValue);
             });
 
             $('#alamatForm').on('submit', function(e) {
                 e.preventDefault();
                 const formData = new FormData(this);
-                const url = $(this).attr('action'); // Use dynamic action set by bukaModalCreate/Edit
-                const method = formData.get('id_alamat') ? 'POST' : 'POST'; // Both use POST as per api.php
+                const url = $(this).attr('action');
+                const method = formData.get('id_alamat') ? 'POST' : 'POST';
                 const token = getToken();
 
                 if (!token) {
@@ -470,7 +556,7 @@
                     return;
                 }
 
-                console.log('Submitting to:', url, 'Method:', method, 'Token:', token); // Debugging
+                console.log('Submitting to:', url, 'Method:', method, 'Token:', token);
 
                 $.ajax({
                     url: url,
@@ -488,7 +574,7 @@
                         $('#alamatModal').modal('hide');
                     },
                     error: function(xhr) {
-                        console.log('Form Submit Error:', xhr); // Debugging
+                        console.log('Form Submit Error:', xhr);
                         if (xhr.status === 401 || xhr.status === 403) {
                             showToast('Sesi kadaluarsa. Silakan login ulang.', 'error');
                             window.location.href = '/login';
@@ -518,7 +604,7 @@
                     localStorage.clear();
                     window.location.href = '/login';
                 });
-             }
+            }
 
             loadProfile();
         });

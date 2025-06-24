@@ -34,6 +34,7 @@ class Penitip extends Authenticatable
 		'alamat_penitip',
 		'nomor_telpon_penitip',
 		'password',
+		'device_token',
 		'total_poin',
 		'tanggal_tambah_penitip_log',
 		'tanggal_ubah_penitip_log',

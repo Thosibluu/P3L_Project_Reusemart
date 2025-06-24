@@ -6,8 +6,10 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Pembeli; 
+use App\Models\Pembeli;
+use App\Models\TransaksiPembelian; 
 use Laravel\Sanctum\PersonalAccessToken;
+use Illuminate\Support\Facades\Log;
 
 class PembeliController extends Controller
 {
@@ -83,6 +85,32 @@ class PembeliController extends Controller
             'total_poin' => $user->total_poin,
             'alamats' => $user->alamats,
         ]);
+    }
+
+    public function transaksiValid(Request $request)
+    {
+        try {
+            //$search = $request->input('search', ''); // Default ke string kosong jika tidak ada search
+
+            $donasi = TransaksiPembelian::where('status_pembelian', 'Sedang disiapkan')->get();
+
+            // Format data untuk respons
+            $donasi = $donasi->map(function ($item) {
+                return [
+                    'no_transaksi' => $item->id_transaksi_beli,
+                    'tanggal_transaksi' => $item->tanggal_lunas ?? '-',
+                    'total_transaksi' => $item->total_harga ?? '-',
+                    'status_transaksi' => $item?->status_pembelian ?? '-',
+                    
+                ];
+            });
+
+            Log::info('donasiLaporan executed successfully, records: ' . $donasi->count());
+            return response()->json($donasi);
+        } catch (\Exception $e) {
+            Log::error('Error in donasiLaporan: ' . $e->getMessage());
+            return response()->json(['message' => 'Terjadi kesalahan server'], 500);
+        }
     }
 
     public function logout(Request $request)

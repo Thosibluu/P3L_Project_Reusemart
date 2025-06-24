@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f5f5f5; }
+        body { font-family: 'Inter', sans-serif; background-color: #f5f5f5; }
         .navbar-brand { color: #00aa5b !important; font-weight: bold; }
         .product-card { transition: transform 0.2s; }
         .product-card:hover { transform: scale(1.03); }
@@ -23,6 +23,21 @@
         .footer { background-color: #ccf5d3; color: #004d26; padding: 40px 0; }
         .footer a { color: #006633; text-decoration: none; }
         .footer a:hover { color: #004d26; }
+        .floating-cart { position: fixed; bottom: 20px; right: 20px; z-index: 1050; }
+        .cart-modal .modal-body { max-height: 400px; overflow-y: auto; }
+        .card-img-top {
+            width: 100%; 
+            height: auto; 
+            aspect-ratio: 16 / 9;
+            object-fit: cover; 
+        }
+        .cart-item img {
+            width: 71.11px; /* 16:9 ratio based on 40px height */
+            height: 40px;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -33,10 +48,9 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <form class="d-flex mx-lg-auto" role="search" action="/search" method="GET" style="max-width: 600px; width: 100%;">
-                    <input class="form-control me-2 w-100" type="search" placeholder="Cari produk..." aria-label="Search" name="query">
-                    <button class="btn btn-outline-success" type="submit">Cari</button>
-                </form>
+                <div class="d-flex mx-lg-auto" style="max-width: 600px; width: 100%;">
+                    <input class="form-control me-2 w-100" type="search" placeholder="Cari produk..." aria-label="Search" id="searchInput">
+                </div>
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item d-flex align-items-center">
                         <img id="user-image" src="{{ asset('img/img1.jpg') }}" alt="Profil" width="40" height="40" class="rounded-circle me-2">
@@ -67,9 +81,9 @@
         </div>
         <div id="produk-container" class="row g-4">
             @foreach ($barangs as $barang)
-                <div class="col-md-3 produk-item" data-kategori="{{ $barang->kategori_id }}">
+                <div class="col-md-3 produk-item" data-kategori="{{ $barang->kategori_id }}" data-nama="{{ $barang->nama_produk }}">
                     <div class="card product-card mb-4 h-100 d-flex flex-column">
-                        <img src="{{ $barang->gambar ? asset('storage/barang/' . $barang->gambar) : asset('img/img1.jpg') }}" class="card-img-top" alt="{{ $barang->nama_produk }}">
+                        <img src="{{ asset('img/' . $barang->gambar) }}" class="card-img-top" alt="{{ $barang->nama_produk }}" onerror="this.src='{{ asset('img/img1.jpg') }}';">
                         <div class="card-body">
                             <h5 class="card-title">{{ $barang->nama_produk }}</h5>
                             <p class="card-text">Rp{{ number_format($barang->harga, 0, ',', '.') }}</p>
@@ -78,6 +92,26 @@
                     </div>
                 </div>
             @endforeach
+        </div>
+    </div>
+
+    <!-- Added Floating Cart Button -->
+    <button class="btn btn-success btn-lg floating-cart d-none" id="cartButton" data-bs-toggle="modal" data-bs-target="#cartModal">
+        <i class="bi bi-cart-fill"></i> (<span id="cartCount">0</span>)
+    </button>
+
+    <!-- Added Cart Modal -->
+    <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cartModalLabel">Keranjang Belanja</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cart-modal">
+                    <div id="cartItems"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -142,20 +176,31 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(document).ready(function () {
+            // Category Filter
             $('.kategori-item').on('click', function () {
                 const kategoriId = $(this).data('id');
                 $('.kategori-img').removeClass('active').css('opacity', '0.5');
                 $(this).find('.kategori-img').addClass('active').css('opacity', '1');
 
-                if (kategoriId) {
-                    $('.produk-item').hide();
-                    $('.produk-item').filter(function () {
-                        return $(this).data('kategori') == kategoriId;
-                    }).show();
-                } else {
-                    $('.produk-item').show();
-                }
+                filterProducts(kategoriId, $('#searchInput').val());
             });
+
+            // Real-Time Search
+            $('#searchInput').on('input', function () {
+                const searchQuery = $(this).val().toLowerCase();
+                const kategoriId = $('.kategori-img.active').parent().data('id');
+                filterProducts(kategoriId, searchQuery);
+            });
+
+            function filterProducts(kategoriId, searchQuery) {
+                $('.produk-item').each(function () {
+                    const itemKategori = $(this).data('kategori');
+                    const itemNama = $(this).data('nama').toLowerCase();
+                    const matchesCategory = !kategoriId || itemKategori == kategoriId;
+                    const matchesSearch = !searchQuery || itemNama.includes(searchQuery);
+                    $(this).toggle(matchesCategory && matchesSearch);
+                });
+            }
 
             const token = localStorage.getItem('access_token');
             const role = localStorage.getItem('role');
@@ -169,6 +214,39 @@
 
             if (userName) $('#user-name').text(userName);
             if (userImage) $('#user-image').attr('src', userImage);
+
+            // Load cart from localStorage
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+            // Update Cart Display
+            function updateCart() {
+                const cartCount = cart.length;
+                $('#cartCount').text(cartCount);
+                $('#cartButton').toggleClass('d-none', cartCount === 0);
+
+                const cartItems = $('#cartItems');
+                cartItems.empty();
+                cart.forEach(item => {
+                    cartItems.append(`
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <img src="/img/${item.gambar ? item.gambar : 'img1.jpg'}" alt="${item.nama}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;"> 
+                            <span>${item.nama} - Rp${item.harga.toLocaleString('id-ID')}</span>
+                            <button class="btn btn-danger btn-sm remove-from-cart" data-kode="${item.kode}">Hapus</button>
+                        </div>
+                    `);
+                });
+            }
+
+            // Remove from Cart
+            $(document).on('click', '.remove-from-cart', function () {
+                const kode = $(this).data('kode');
+                cart = cart.filter(item => item.kode !== kode);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCart();
+            });
+
+            // Initial cart update
+            updateCart();
         });
 
         function goToProfile() {
@@ -181,9 +259,8 @@
                 return;
             }
 
-            const route = role === 'pembeli' ? '/livecode' : '/profil-penitip'; //livecode only!
+            const route = role === 'pembeli' ? '/profil' : '/profil-penitip';
 
-            // Use fetch to send the token and check authentication
             fetch(route, {
                 method: 'GET',
                 headers: {
@@ -199,7 +276,6 @@
                 } else if (!response.ok) {
                     throw new Error('Gagal mengakses profil');
                 } else {
-                    // No need to parse as JSON; navigate directly
                     window.location.href = `${route}?token=${encodeURIComponent(token)}`;
                 }
             })
