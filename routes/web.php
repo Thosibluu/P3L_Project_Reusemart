@@ -110,23 +110,3 @@ Route::get('/kategori/{id?}', [BarangController::class, 'byKategori'])->name('ka
 
 Route::get('/produk/{kode_produk}', [BarangController::class, 'show'])->name('produk.show');
 
-Route::get('/password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
-Route::get('/password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
-Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
-
-Route::get('/test-session', function () {
-    session(['test' => 'Session working']);
-    return session('test');
-});
-
-// Routes for Checkout and Konfirmasi
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/checkout-buy', [TransaksiPembelianController::class, 'showCheckoutBuy'])->name('checkout.buy');
-    Route::get('/checkout-cart', [TransaksiPembelianController::class, 'showCheckoutCart'])->name('checkout.cart');
-    Route::post('/checkout/process', [TransaksiPembelianController::class, 'processCheckout'])->name('checkout.process');
-    Route::get('/konfirmasi/{transactionId}', [TransaksiPembelianController::class, 'showKonfirmasi'])->name('konfirmasi');
-    Route::post('/konfirmasi/{transactionId}', [TransaksiPembelianController::class, 'confirm'])->name('konfirmasi.process');
-    Route::post('/cancel/{transactionId}', [TransaksiPembelianController::class, 'cancel'])->name('cancel.transaction');
-    Route::get('/produk/{kode_produk}/beli', [TransaksiPembelianController::class, 'buyNow'])->name('buy.now');
-});

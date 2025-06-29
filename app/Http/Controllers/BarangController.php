@@ -27,6 +27,25 @@ class BarangController extends Controller
         return view('app', compact('barangs', 'kategoris'));
     }
 
+    public function apiIndex(Request $request)
+    {
+        try {
+            $barangs = Barang::select('kode_produk as id_barang', 'nama_produk', 'harga', 'gambar')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $barangs,
+                'message' => 'Produk berhasil diambil',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil produk: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function byKategori(Request $request, $id = null)
     {
         $barangs = $id ? Barang::where('id_kategori', $id)->get() : Barang::all();
@@ -38,7 +57,6 @@ class BarangController extends Controller
         $barang = Barang::where('kode_produk', $kode_produk)->firstOrFail();
         $komentars = Komentar::where('kode_produk', $kode_produk)->with('pembeli')->get();
 
-        // Find penitip
         $detailPenitipan = DetailPenitipan::where('kode_produk', $kode_produk)->first();
         $penitipName = 'Penitip Misterius';
         if ($detailPenitipan) {
@@ -55,7 +73,15 @@ class BarangController extends Controller
     public function apiShow($kode_produk)
     {
         $barang = Barang::where('kode_produk', $kode_produk)->firstOrFail();
-        return response()->json($barang, 200);
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id_barang' => $barang->kode_produk,
+                'nama_produk' => $barang->nama_produk,
+                'harga' => $barang->harga,
+                'gambar' => $barang->gambar,
+            ],
+            'message' => 'Produk ditemukan',
+        ], 200);
     }
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
@@ -22,7 +23,6 @@ Route::post('/organisasi-register', [OrganisasiController::class, 'register']);
 
 Route::post('/pembeli-login', [PembeliController::class, 'login']);
 Route::post('/penitip-login', [PenitipController::class, 'login']);
-
 Route::post('/pegawai-login', [PegawaiController::class, 'pegawaiLogin']);
 Route::post('/reset-pegawai-password', [PegawaiController::class, 'resetPegawaiPassword']);
 
@@ -32,20 +32,18 @@ Route::middleware('auth:sanctum')->post('/logout', [MobileAuthController::class,
 Route::middleware('auth:sanctum')->get('/profilestaff', [MobileAuthController::class, 'getProfile']);
 Route::middleware('auth:sanctum')->get('/transaksi-pembelian/courier-tasks', [TransaksiPembelianController::class, 'getCourierTasks']);
 Route::middleware('auth:sanctum')->post('/transaksi-pembelian/complete/{transactionId}', [TransaksiPembelianController::class, 'completeDelivery']);
+Route::middleware('auth:sanctum')->get('/products', [BarangController::class, 'apiIndex']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
-    // Use a single profile route with conditional logic or separate endpoints
     Route::get('/profile', [PembeliController::class, 'getProfile'])->name('api.profile.pembeli');
     Route::get('/profile-penitip', [PenitipController::class, 'getProfile'])->name('api.profile.penitip');
 
     Route::post('/pembeli-logout', [PembeliController::class, 'logout']);
     Route::post('/penitip-logout', [PenitipController::class, 'logout']);
-
-    
 
     Route::get('/alamats', [AlamatController::class, 'index']);
     Route::post('/alamats', [AlamatController::class, 'store']);
@@ -55,9 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/komentar/{kode_produk}', [KomentarController::class, 'store']);
     Route::get('/komentar/{kode_produk}', [KomentarController::class, 'index']);
 
-    // Routes for Transaction and Address
     Route::get('/profiles', [TransaksiPembelianController::class, 'showProfile']);
-    //Route::get('/alamatsend', [TransaksiPembelianController::class, 'showAddresses']); // Moved to avoid conflict
     Route::post('/checkout', [TransaksiPembelianController::class, 'processCheckout']);
     Route::post('/konfirmasi/{transactionId}', [TransaksiPembelianController::class, 'confirm']);
     Route::post('/konfirmasi/{transactionId}/cancel', [TransaksiPembelianController::class, 'cancel']);

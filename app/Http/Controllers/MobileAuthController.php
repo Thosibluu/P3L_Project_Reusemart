@@ -22,24 +22,19 @@ class MobileAuthController extends Controller
         $user = null;
         $role = null;
 
-        // 1. Identifikasi tipe username dan cek di tabel yang sesuai
         if (filter_var($username, FILTER_VALIDATE_EMAIL)) {
-            // Username adalah email, cek di tabel pembeli
             $user = Pembeli::where('alamat_email', $username)->first();
             if ($user) {
                 $role = 'pembeli';
             }
         } elseif (preg_match('/^T\d+$/', $username)) {
-            // Username adalah id_penitip (format: T + angka), cek di tabel penitip
             $user = Penitip::where('id_penitip', $username)->first();
             if ($user) {
                 $role = 'penitip';
             }
         } elseif (preg_match('/^RM\d+$/', $username)) {
-            // Username adalah id_pegawai (format: RM + angka), cek di tabel pegawai
             $user = Pegawai::where('id_pegawai', $username)->first();
             if ($user) {
-                // Tentukan role berdasarkan id_role
                 if ($user->id_role === 'R33') {
                     $role = 'kurir';
                 } elseif ($user->id_role === 'R55') {
@@ -52,24 +47,20 @@ class MobileAuthController extends Controller
             }
         }
 
-        // 2. Jika user tidak ditemukan
         if (!$user) {
             return response()->json([
                 'message' => 'User tidak ditemukan',
             ], 404);
         }
 
-        // 3. Validasi password
         if (!Hash::check($password, $user->password)) {
             return response()->json([
                 'message' => 'Password salah',
             ], 401);
         }
 
-        // 4. Buat token Sanctum
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // 5. Kembalikan response
         return response()->json([
             'message' => 'Login berhasil',
             'token' => $token,
@@ -105,6 +96,7 @@ class MobileAuthController extends Controller
 
         return response()->json([
             'nama_pegawai' => $pegawai->nama_pegawai,
+            'id_pegawai' => $pegawai->id_pegawai,
             'no_telpon_pegawai' => $pegawai->no_telpon_pegawai,
             'alamat_pegawai' => $pegawai->alamat_pegawai,
             'tanggal_lahir' => $pegawai->tanggal_lahir? $pegawai->tanggal_lahir->format('Y-m-d') : null,
