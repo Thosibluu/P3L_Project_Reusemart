@@ -61,6 +61,11 @@
             <li class="nav-item" id="laporan-donasi-tab2" style="display: none;">
                 <a class="nav-link" href="#donasi-laporan2" data-bs-toggle="tab">Laporan Donasi Barang 2</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#activity-logs" data-bs-toggle="tab">
+                    <i class="bi bi-journal-text"></i> Aktivitas Log
+                </a>
+            </li>
         </ul>
     </div>
 
@@ -97,8 +102,23 @@
 
             <!-- Users Tab -->
             <div class="tab-pane fade" id="users">
-                <h2>Manajemen Pengguna</h2>
-                <p>Halaman untuk mengelola pengguna akan ditambahkan di sini.</p>
+                <h2 class="mb-4">Manajemen Pengguna Pembeli</h2>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Email</th>
+                                <th>Nama</th>
+                                <th>Nomor Telepon</th>
+                                <th>Status Akun</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pembeliTableBody">
+                            <!-- Data diisi via JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Products Tab -->
@@ -290,6 +310,48 @@
                         </thead>
                         <tbody id="penitipan-table-body">
                             <tr><td colspan="7" class="text-muted text-center">Pilih filter untuk melihat data transaksi.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DI DALAM <div class="tab-content"> -->
+            <!-- TAB AKTIVITAS LOG (TAMBAH INI DI BAWAH TAB LAIN) -->
+            <div class="tab-pane fade" id="activity-logs">
+                <h2>Aktivitas Log Pengguna</h2>
+                <div class="d-flex justify-content-between mb-3 align-items-center">
+                    <div class="d-flex gap-2">
+                        <input type="text" id="searchLog" class="form-control" placeholder="Cari nama / email / ID..." style="width: 300px;">
+                        <select id="filterRole" class="form-select" style="width: 150px;">
+                            <option value="">Semua Role</option>
+                            <option value="pembeli">Pembeli</option>
+                            <option value="penitip">Penitip</option>
+                            <option value="organisasi">Organisasi</option>
+                            <option value="pegawai">Pegawai</option>
+                        </select>
+                        <button class="btn btn-primary" id="refreshLogs">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                    <button class="btn btn-success" id="exportLogPdf">
+                        <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                    </button>
+                </div>
+
+                <div class="table-responsive" style="max-height: 70vh;">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark sticky-top">
+                            <tr>
+                                <th>Waktu</th>
+                                <th>User</th>
+                                <th>Tipe</th>
+                                <th>Aksi</th>
+                                <th>Deskripsi</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody">
+                            <!-- Data diisi via JS -->
                         </tbody>
                     </table>
                 </div>
@@ -572,6 +634,46 @@
             });
         }
 
+        function loadPembeli() {
+    $.ajax({
+        url: '/api/pembeli',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        },
+        success: function(data) {
+            const tbody = $('#pembeliTableBody');
+            tbody.empty();
+
+            data.forEach(u => {
+                const isLocked = Boolean(Number(u.locked));
+                const status = isLocked? '<span class="badge bg-danger">Terkunci</span>'
+                    : '<span class="badge bg-success">Aktif</span>';
+
+                const button = isLocked? `<button class="btn btn-success btn-sm unlock-btn">
+                         <i class="bi bi-unlock-fill"></i> Unlock
+                       </button>`
+                    : `<button class="btn btn-danger btn-sm lock-btn">
+                         <i class="bi bi-lock-fill"></i> Lock
+                       </button>`;
+
+                tbody.append(`
+                    <tr data-email="${u.alamat_email}">
+                        <td>${u.alamat_email}</td>
+                        <td>${u.nama_pembeli || '-'}</td>
+                        <td>${u.nomor_telepon_pembeli || '-'}</td>
+                        <td>${status}</td>
+                        <td>${button}</td>
+                    </tr>
+                `);
+            });
+        },
+        error: function() {
+            alert('Gagal memuat data pembeli. Pastikan token admin valid.');
+        }
+    });
+}
+
         function validateTransaksi(id, isValid, pembeliEmail) {
             const data = { is_valid: isValid, alamat_email: pembeliEmail };
             $.ajax({
@@ -834,7 +936,100 @@
             });
         }
 
-        
+        function loadActivityLogs(search = '', role = '') {
+    $.ajax({
+        url: '/api/activity-logs',
+        method: 'GET',
+        data: { search, role },
+        success: function(logs) {
+            const tbody = $('#logTableBody');
+            tbody.empty();
+
+            if (logs.length === 0) {
+                tbody.append('<tr><td colspan="6" class="text-center text-muted py-5">Tidak ada aktivitas ditemukan.</td></tr>');
+                return;
+            }
+
+            logs.forEach(log => {
+                const time = new Date(log.logged_at).toLocaleString('id-ID', {
+                    day: '2-digit', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+
+                const badgeColor = {
+                    'Login': 'bg-success',
+                    'Register': 'bg-primary',
+                    'Login Failed': 'bg-danger',
+                    'Logout': 'bg-secondary'
+                }[log.action] || 'bg-info';
+
+                // Sekarang kolom "nama" sudah berformat: "Budi Santoso (budi@gmail.com)" atau "Unknown User (RM001)"
+                let userDisplay = log.nama;
+
+                // Kalau masih format lama (hanya nama tanpa ID), kita pisah manual
+                if (!userDisplay.includes('(')) {
+                    userDisplay = log.nama 
+                        ? `<strong>${log.nama}</strong><br><small class="text-muted">${log.user_id}</small>`
+                        : `<strong>Unknown User</strong><br><small class="text-muted">${log.user_id}</small>`;
+                } else {
+                    // Format baru dari LogHelper → "Nama (email/ID)"
+                    const namePart = userDisplay.split(' (')[0];
+                    const idPart = userDisplay.match(/\((.*?)\)/)?.[1] || log.user_id;
+                    userDisplay = `<strong>${namePart}</strong><br><small class="text-muted">${idPart}</small>`;
+                }
+
+                tbody.append(`
+                    <tr>
+                        <td><small>${time}</small></td>
+                        <td>${userDisplay}</td>
+                        <td><span class="badge bg-info text-dark">${log.user_type}</span></td>
+                        <td><span class="badge ${badgeColor}">${log.action}</span></td>
+                        <td><small>${log.description || '-'}</small></td>
+                        <td><code>${log.ip_address}</code></td>
+                    </tr>
+                `);
+            });
+        },
+        error: function() {
+            showToast('Gagal memuat log aktivitas', 'error');
+        }
+    });
+}
+
+// === EXPORT PDF LOG ===
+function exportLogPdf() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('l', 'mm', 'a4'); // landscape
+
+    doc.setFontSize(16);
+    doc.setTextColor(0, 170, 91);
+    doc.text('ReUse Mart - Laporan Aktivitas Pengguna', 15, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 15, 30);
+
+    const tableData = [];
+    $('#logTableBody tr').each(function() {
+        const row = [];
+        $(this).find('td').each(function() {
+            row.push($(this).text().replace(/^\s+|\s+$/g, ''));
+        });
+        if (row.length > 0) tableData.push(row);
+    });
+
+    doc.autoTable({
+        head: [['Waktu', 'User', 'Tipe', 'Aksi', 'Deskripsi', 'IP']],
+        body: tableData,
+        startY: 40,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [0, 170, 91] }
+    });
+
+    doc.save(`Log_Aktivitas_${new Date().toISOString().slice(0,10)}.pdf`);
+    showToast('PDF Log berhasil diunduh!', 'success');
+}        
 
         // Fungsi untuk memeriksa status filter
         function checkFilterStatus() {
@@ -850,9 +1045,40 @@
             checkFilterStatus();
         });
 
+        
+
+        // Load saat tab dibuka
+        $('a[href="#users"]').on('shown.bs.tab', function() {
+            loadPembeli();
+        });
+
         $(document).ready(function () {
 
             checkFilterStatus();
+
+            $('a[href="#activity-logs"]').on('shown.bs.tab', function() {
+                loadActivityLogs();
+            });
+
+            // Search real-time
+            let searchTimeout;
+            $('#searchLog').on('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    loadActivityLogs($(this).val(), $('#filterRole').val());
+                }, 500);
+            });
+
+            $('#filterRole').on('change', function() {
+                loadActivityLogs($('#searchLog').val(), $(this).val());
+            });
+
+            $('#refreshLogs').on('click', function() {
+                loadActivityLogs($('#searchLog').val(), $('#filterRole').val());
+                showToast('Log diperbarui!', 'success');
+            });
+
+            $('#exportLogPdf').on('click', exportLogPdf);
 
             // Sidebar toggle for mobile
             $('#sidebarToggle').on('click', function () {
@@ -877,6 +1103,49 @@
                     const searchValue = $(this).val();
                     loadOrganisasi(searchValue);
                 }
+            });
+
+            $(document).on('click', '.unlock-btn', function() {
+    const email = $(this).closest('tr').data('email');
+    if (!confirm(`Yakin ingin MEMBUKA akun:\n${email} ?`)) return;
+
+    $.ajax({
+        url: '/api/pembeli/unlock',
+        method: 'POST',
+        data: JSON.stringify({ alamat_email: email }),
+        contentType: 'application/json',
+        success: function() {
+            showToast('Akun berhasil dibuka & attempt direset!', 'success');
+            loadPembeli(); // Pastikan reload data
+        },
+        error: function() {
+            showToast('Gagal unlock akun', 'error');
+        }
+    });
+});
+
+$(document).on('click', '.lock-btn', function() {
+    const email = $(this).closest('tr').data('email');
+    if (!confirm(`Yakin ingin MENGUNCI akun:\n${email} ?`)) return;
+
+    $.ajax({
+        url: '/api/pembeli/lock',
+        method: 'POST',
+        data: JSON.stringify({ alamat_email: email }),
+        contentType: 'application/json',
+        success: function() {
+            showToast('Akun berhasil dikunci!', 'success');
+            loadPembeli();
+        },
+        error: function() {
+            showToast('Gagal lock akun', 'error');
+        }
+    });
+});
+
+            // AUTO LOAD KETIKA TAB DIBUKA
+            $('a[data-bs-toggle="tab"][href="#users"]').on('shown.bs.tab', function () {
+                loadPembeli();
             });
 
             $('#organisasi-table').on('click', '.edit-btn', function() {

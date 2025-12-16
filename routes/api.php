@@ -33,6 +33,21 @@ Route::middleware('auth:sanctum')->get('/profilestaff', [MobileAuthController::c
 Route::middleware('auth:sanctum')->get('/transaksi-pembelian/courier-tasks', [TransaksiPembelianController::class, 'getCourierTasks']);
 Route::middleware('auth:sanctum')->post('/transaksi-pembelian/complete/{transactionId}', [TransaksiPembelianController::class, 'completeDelivery']);
 Route::middleware('auth:sanctum')->get('/products', [BarangController::class, 'apiIndex']);
+Route::middleware('auth:sanctum')->get('/activity-logs', function (Request $request) {
+    $logs = DB::table('activity_logs')
+        ->select('user_type', 'user_id', 'nama', 'action', 'description', 'ip_address', 'logged_at')
+        ->when($request->search, function ($q, $search) {
+            return $q->where('nama', 'like', "%{$search}%")
+                     ->orWhere('user_id', 'like', "%{$search}%")
+                     ->orWhere('description', 'like', "%{$search}%");
+        })
+        ->when($request->role, fn($q, $role) => $q->where('user_type', $role))
+        ->orderByDesc('logged_at')
+        ->limit(500)
+        ->get();
+
+    return response()->json($logs);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
@@ -72,6 +87,10 @@ Route::prefix('organisasi')->group(function () {
 
 Route::get('/request-donasi', [RequestDonasiController::class, 'index']);
 Route::get('/donasi-laporan', [TransaksiDonasiController::class, 'donasiLaporan']);
+
+Route::get('/pembeli', [PembeliController::class, 'listPembeli']);
+Route::post('/pembeli/unlock', [PembeliController::class, 'unlockAkun']);
+Route::post('/pembeli/lock',   [PembeliController::class, 'lockAkun']);
 
 Route::get('/transaksi', [TransaksiPembelianController::class, 'index']);
 Route::post('/transaksi/validate/{id}', [TransaksiPembelianController::class, 'validateTransaction']);

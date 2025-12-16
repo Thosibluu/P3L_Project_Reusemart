@@ -37,7 +37,10 @@ class Pembeli extends Authenticatable
 		'nama_pembeli',
 		'nomor_telepon_pembeli',
 		'total_poin',
-		'gambar'
+		'gambar',
+		'locked',           // WAJIB ADA!
+    	'login_attempts',
+		
 	];
 
 	public function alamats()

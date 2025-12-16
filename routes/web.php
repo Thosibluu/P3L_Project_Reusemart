@@ -51,6 +51,8 @@ Route::middleware('auth')->group(function () {
         Route::put('{id}', [OrganisasiController::class, 'update'])->name('organisasi.update');
         Route::delete('{id}', [OrganisasiController::class, 'destroy'])->name('organisasi.destroy');
     });
+
+    
 });
 
 Route::get('/', function () {
@@ -110,3 +112,11 @@ Route::get('/kategori/{id?}', [BarangController::class, 'byKategori'])->name('ka
 
 Route::get('/produk/{kode_produk}', [BarangController::class, 'show'])->name('produk.show');
 
+// routes/web.php atau api.php
+
+
+// === 2FA OTP ROUTES (WEB ONLY) ===
+Route::get('/verify-otp', [PembeliController::class, 'showVerifyOtpForm'])->name('verify.otp.form');
+Route::post('/verify-otp', [PembeliController::class, 'verifyOtp'])->name('verify.otp');
+
+Route::post('/resend-otp', [PembeliController::class, 'resendOtp'])->name('resend.otp');

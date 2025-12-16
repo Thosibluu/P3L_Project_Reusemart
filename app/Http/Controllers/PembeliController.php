@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -32,43 +33,97 @@ class PembeliController extends Controller
             'nama_pembeli' => $request->nama_pembeli,
             'nomor_telepon_pembeli' => $request->nomor_telepon_pembeli,
             'total_poin' => 0,
-            'gambar' => 'img/img1.jpg', // kosong atau default image
+            'gambar' => 'img/img1.jpg',
         ]);
+
+        log_activity(
+            'pembeli',
+            $pembeli->alamat_email,
+            $pembeli->nama_pembeli,
+            'Register',
+            'Berhasil registrasi akun pembeli'
+        );
 
         return response()->json(['message' => 'Pendaftaran berhasil', 'Pembeli' => $pembeli,], 201);
     }
 
     public function login(Request $request)
-    {
-        $request->validate([
-            'alamat_email' => 'required|string|email',
-            'password' => 'required|string'
-        ]);
+{
+    $request->validate([
+        'alamat_email' => 'required|email',
+        'password'     => 'required|string'
+    ]);
 
-        $pembeli = Pembeli::where('alamat_email', $request->alamat_email)->first();
+    $email   = $request->alamat_email;
+    $pembeli = Pembeli::where('alamat_email', $email)->first();
 
-        if (!$pembeli || !Hash::check($request->password, $pembeli->password)) {
-            return response()->json(['message' => 'Email atau password salah'], 401);
-        }
+    // 1. AKUN SUDAH TERKUNCI?
+    if ($pembeli->locked) {
+        log_activity('pembeli', $email, $pembeli->nama_pembeli ?? '-', 'Login Failed', 'Akun terkunci oleh sistem/admin');
+        return response()->json(['message' => 'Akun Anda terkunci. Hubungi admin.'], 403);
+    }
 
-        $token = $pembeli->createToken('pembeli-token', ['role:pembeli'])->plainTextToken;
+    // 2. EMAIL TIDAK ADA
+    if (!$pembeli) {
+        log_activity('pembeli', $email, null, 'Login Failed', 'Email tidak terdaftar');
+        return response()->json(['message' => 'Email atau password salah'], 401);
+    }
 
-        $userData = [
-            'alamat_email' => $pembeli->alamat_email,
-            'nama_pembeli' => $pembeli->nama_pembeli,
-            'nomor_telepon_pembeli' => $pembeli->nomor_telepon_pembeli,
-            'total_poin' => $pembeli->total_poin,
-            'profile_image' => $pembeli->gambar,
-        ];
+    // 3. PASSWORD SALAH
+    // 3. PASSWORD SALAH
+if (!Hash::check($request->password, $pembeli->password)) {
+    // Selalu tambah attempt dulu
+    $pembeli->increment('login_attempts');
+
+    // Cek apakah sudah mencapai 3 kali
+    if ($pembeli->login_attempts >= 3) {
+        $pembeli->update(['locked' => true]);
+
+        log_activity(
+            'pembeli',
+            $email,
+            $pembeli->nama_pembeli,
+            'Account Locked',
+            'Akun terkunci otomatis setelah 3x gagal login (IP: ' . $request->ip() . ')'
+        );
 
         return response()->json([
-            'user' => $userData,
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'role' => 'pembeli',
-            'message' => 'Login berhasil'
-        ], 200);
+            'message' => 'Akun Anda terkunci karena 3x gagal login. Hubungi admin untuk membuka.'
+        ], 403);
     }
+
+    log_activity(
+        'pembeli',
+        $email,
+        $pembeli->nama_pembeli,
+        'Login Failed',
+        "Gagal login (percobaan ke-{$pembeli->login_attempts})"
+    );
+
+    return response()->json(['message' => 'Email atau password salah'], 401);
+}
+
+    // 4. LOGIN BERHASIL → RESET SEMUA
+    $pembeli->update(['login_attempts' => 0, 'locked' => false]);
+
+    $token = $pembeli->createToken('pembeli-token', ['role:pembeli'])->plainTextToken;
+
+    log_activity('pembeli', $email, $pembeli->nama_pembeli, 'Login', 'Login berhasil dari IP: ' . $request->ip());
+
+    return response()->json([
+        'message'      => 'Login berhasil',
+        'access_token' => $token,
+        'token_type'   => 'Bearer',
+        'role'         => 'pembeli',
+        'user'         => [
+            'alamat_email'         => $pembeli->alamat_email,
+            'nama_pembeli'         => $pembeli->nama_pembeli,
+            'nomor_telepon_pembeli'=> $pembeli->nomor_telepon_pembeli,
+            'total_poin'           => $pembeli->total_poin,
+            'profile_image'        => $pembeli->gambar ?? asset('img/img1.jpg'),
+        ]
+    ]);
+}
 
     public function getProfile(Request $request)
     {
@@ -90,18 +145,14 @@ class PembeliController extends Controller
     public function transaksiValid(Request $request)
     {
         try {
-            //$search = $request->input('search', ''); // Default ke string kosong jika tidak ada search
-
             $donasi = TransaksiPembelian::where('status_pembelian', 'Sedang disiapkan')->get();
 
-            // Format data untuk respons
             $donasi = $donasi->map(function ($item) {
                 return [
                     'no_transaksi' => $item->id_transaksi_beli,
                     'tanggal_transaksi' => $item->tanggal_lunas ?? '-',
                     'total_transaksi' => $item->total_harga ?? '-',
                     'status_transaksi' => $item?->status_pembelian ?? '-',
-                    
                 ];
             });
 
@@ -117,5 +168,68 @@ class PembeliController extends Controller
     {
         $request->user()->tokens()->delete();
         return response()->json(['message' => 'Logout berhasil'], 200);
+    }
+
+    public function listPembeli()
+    {
+        try {
+            $pembeli = Pembeli::select( 'alamat_email', 'nama_pembeli', 'nomor_telepon_pembeli', 'locked')->get();
+            return response()->json($pembeli);
+        } catch (\Exception $e) {
+            Log::error('Error loading pembeli list: ' . $e->getMessage());
+            return response()->json(['message' => 'Gagal memuat data pembeli'], 500);
+        }
+    }
+
+    public function unlockAkun(Request $request)
+    {
+        $request->validate([
+            'alamat_email' => 'required|email|exists:pembeli,alamat_email'
+        ]);
+
+        $pembeli = Pembeli::where('alamat_email', $request->alamat_email)->firstOrFail();
+        
+        $pembeli->update([
+            'locked' => false,
+            'login_attempts' => 0
+        ]);
+
+        log_activity(
+            user_type: 'admin',
+            identifier: 'admin',
+            nama: 'Admin',
+            action: 'Unlock Akun',
+            description: "Membuka akun pembeli: {$pembeli->alamat_email}"
+        );
+
+        return response()->json([
+            'message' => 'Akun berhasil dibuka & percobaan login direset'
+        ]);
+    }
+
+    // Lock akun berdasarkan email
+    public function lockAkun(Request $request)
+    {
+        $request->validate([
+            'alamat_email' => 'required|email|exists:pembeli,alamat_email'
+        ]);
+
+        $pembeli = Pembeli::where('alamat_email', $request->alamat_email)->firstOrFail();
+        
+        $pembeli->update([
+            'locked' => true
+        ]);
+
+        log_activity(
+            user_type: 'admin',
+            identifier: 'admin',
+            nama: 'Admin',
+            action: 'Lock Akun',
+            description: "Mengunci akun pembeli: {$pembeli->alamat_email}"
+        );
+
+        return response()->json([
+            'message' => 'Akun berhasil dikunci'
+        ]);
     }
 }
